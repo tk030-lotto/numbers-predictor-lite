@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ナンバーズ解析・排除システム | 構造解析7指標合議版</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #060608;
+            --card: rgba(16, 16, 20, 0.85);
+            --card-sub: rgba(22, 22, 32, 0.9);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(168, 85, 247, 0.4);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            
+            --purple: #a855f7;
+            --purple-glow: rgba(168, 85, 247, 0.3);
+            --amber: #f59e0b;
+            --amber-glow: rgba(245, 158, 11, 0.2);
+            
+            --exclude: #ef4444;
+            --exclude-glow: rgba(239, 68, 68, 0.2);
+            --survive: #10b981;
+            --survive-glow: rgba(16, 185, 129, 0.2);
+            
+            --success: #10b981;
+            --fail: #ef4444;
+            --blue: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.2);
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(168, 85, 247, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* アプリコンテナ */
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 24px 16px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: 1.5px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px var(--purple-glow);
+        }
+
+        header .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            margin-top: 6px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        /* タブコンテナ */
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid var(--border);
+            gap: 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.85rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tab-btn.active {
+            color: var(--purple);
+            border-bottom: 2px solid var(--purple);
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+        }
+
+        /* セレクター */
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .game-selector {
+            display: flex;
+            gap: 8px;
+        }
+
+        .game-btn {
+            flex: 1;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .game-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--text-main);
+        }
+
+        .game-btn.active {
+            background: linear-gradient(135deg, var(--purple), #7e22ce);
+            color: #fff;
+            border-color: var(--purple);
+            box-shadow: 0 4px 15px var(--purple-glow);
+        }
+
+        /* カード共通 */
+        .flow-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .flow-card.accent-border {
+            border-color: var(--purple);
+            box-shadow: 0 0 20px var(--purple-glow);
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 設定パネル */
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 4px 0;
+        }
+        
+        .settings-content {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .setting-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .setting-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .setting-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #fff;
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .setting-input:focus {
+            border-color: var(--purple);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .checkbox-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            font-weight: 700;
+        }
+
+        .checkbox-btn.checked {
+            background: var(--purple-glow);
+            border-color: var(--purple);
+            color: #d8b4fe;
+        }
+
+        /* 桁別数字ボード */
+        .digits-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .digit-column {
+            background: var(--card-sub);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .digit-header {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--purple);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .digit-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+
+        .num-box {
+            aspect-ratio: 1.1 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border);
+        }
+
+        .num-box .num-val {
+            font-weight: 900;
+            font-size: 0.95rem;
+            color: #f3f4f6;
+        }
+
+        .num-box .num-ema {
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .num-box:hover {
+            transform: scale(1.05);
+            border-color: var(--purple);
+            z-index: 2;
+        }
+
+        /* 排除状態の数字 */
+        .num-box.excluded {
+            background: rgba(239, 68, 68, 0.03) !important;
+            border-color: rgba(239, 68, 68, 0.15) !important;
+        }
+        
+        .num-box.excluded .num-val {
+            color: #4b4b5a !important;
+            text-decoration: line-through;
+        }
+        
+        .num-box.excluded .num-ema {
+            color: rgba(239, 68, 68, 0.3) !important;
+        }
+
+        .num-box.excluded::after {
+            content: "";
+            position: absolute;
+            width: 140%;
+            height: 1px;
+            background: rgba(239, 68, 68, 0.15);
+            transform: rotate(-30deg);
+        }
+
+        /* 生存状態の数字（高EMAの強調） */
+        .num-box.hot-digit {
+            background: rgba(168, 85, 247, 0.05);
+            border-color: rgba(168, 85, 247, 0.3);
+        }
+        .num-box.hot-digit .num-val {
+            color: #d8b4fe;
+            text-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
+        }
+
+        /* メインアクションボタン */
+        .btn-main {
+            width: 100%;
+            background: linear-gradient(135deg, var(--purple), #6b21a8);
+            color: #fff;
+            border: none;
+            padding: 15px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 4px 15px var(--purple-glow);
+            transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+
+        .btn-main:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-sub {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 14px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-sub:hover {
+            border-color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* 免責オーバーレイ */
+        #disclaimerOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(4, 4, 6, 0.96);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(12px);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .disclaimer-content {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .disclaimer-title {
+            color: var(--purple);
+            font-size: 1.25rem;
+            font-weight: 900;
+            text-align: center;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+
+        .disclaimer-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+            max-height: 260px;
+            overflow-y: auto;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 8px;
+        }
+        
+        .disclaimer-text h4 {
+            color: var(--text-main);
+            margin: 12px 0 6px 0;
+        }
+        .disclaimer-text p {
+            margin: 0 0 10px 0;
+        }
+
+        /* 予測結果 */
+        .prediction-item {
+            background: var(--card-sub);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: border-color 0.2s;
+        }
+        
+        .prediction-item:hover {
+            border-color: rgba(168, 85, 247, 0.2);
+        }
+
+        .prediction-nums {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .pred-box {
+            width: 42px;
+            height: 42px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--purple);
+            color: #d8b4fe;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 900;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+        }
+
+        /* 統計パネル */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--purple);
+            margin-top: 4px;
+        }
+        
+        .stat-desc {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        /* バックテストログ */
+        .backtest-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .bt-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .bt-card .bt-lbl {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+        .bt-card .bt-val {
+            font-size: 1.4rem;
+            font-weight: 900;
+            margin-top: 4px;
+        }
+
+        .bt-log-container {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            font-size: 0.7rem;
+            padding: 10px;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .bt-log-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.01);
+        }
+        
+        .badge {
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+        }
+        .badge.straight {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .badge.box {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .badge.captured {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+        .badge.missed {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        .progress-bar-fill {
+            background: var(--purple);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: #20202d;
+            font-size: 0.65rem;
+            margin-top: 20px;
+            font-weight: 700;
+        }
+
+        /* モーダル */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            padding: 16px;
+            box-sizing: border-box;
+            backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background: var(--card-sub);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #fff;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 利用規約・免責事項同意画面 -->
+    <div id="disclaimerOverlay">
+        <div class="disclaimer-content">
+            <h3 class="disclaimer-title">⚠️ 利用規約 ＆ 免責事項</h3>
+            <div class="disclaimer-text">
+                <p>ナンバーズ解析支援システム「ナンバーズ解析ツール」（以下、本ツール）をご利用いただく前に、以下の条項を必ずお読みください。本ツールの利用を開始した時点で、これらの条件に同意したものとみなされます。</p>
+                <h4>1. 免責事項</h4>
+                <p>・本ツールは、過去の当選結果に基づく統計的解析により、出現期待値の極端に低い数字を「排除」することで、購入の組み合わせ効率を向上させる支援を行うものであり、将来の当選を保証するものではありません。</p>
+                <p>・宝くじの購入はご自身の判断と責任において行ってください。本ツールの利用により生じたいかなる損害、不利益、損失に対しても、開発者および提供者は一切の責任を負いません。</p>
+                <h4>2. データ取得について</h4>
+                <p>・本ツールが利用する最新データは、統計解析の目的で公開データから抽出されたものであり、通信状態等の要因により実際の抽選結果と同期が遅れる場合があります。最終的な当選確認は、必ず主催者（みずほ銀行等）の公式発表で行ってください。</p>
+            </div>
+            <button class="btn-main" onclick="agreeDisclaimer()">同意して利用を開始する</button>
+        </div>
+    </div>
+
+    <!-- メインアプリケーション画面 -->
+    <div class="app-container" id="appContainer" style="display: none;">
+        <header>
+            <h1>NUMBERS_ANALYZER</h1>
+            <div class="subtitle">ナンバーズ解析ツール・構造解析7指標合議版</div>
+        </header>
+
+        <!-- タブ切り替え -->
+        <div class="tab-container">
+            <div class="tab-btn active" id="tab-predict" onclick="switchTab('predict')">🔮 排除コンソール</div>
+            <div class="tab-btn" id="tab-backtest" onclick="switchTab('backtest')">📈 検証バックテスト</div>
+        </div>
+
+        <!-- 予想（排除）タブ -->
+        <div id="tabContent-predict" style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="selector-group">
+                <div class="game-selector">
+                    <button class="game-btn active" id="btn-game-n4" onclick="selectGame('n4')">NUMBERS 4</button>
+                    <button class="game-btn" id="btn-game-n3" onclick="selectGame('n3')">NUMBERS 3</button>
+                </div>
+            </div>
+
+            <!-- 7指標設定パネル (アコーディオン) -->
+            <div class="flow-card">
+                <div class="settings-header" onclick="toggleSettings()">
+                    <div class="section-title" style="color: var(--purple); margin-bottom: 0;">
+                        <span>⚙️</span> 構造解析7指標フィルター設定
+                    </div>
+                    <span id="settings-arrow" style="font-size: 0.75rem; color: var(--text-muted);">▼ 開く</span>
+                </div>
+                
+                <div class="settings-content" id="settings-content">
+                    <!-- 合計値フィルター -->
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>② 合計値 (S級) 推奨レンジ</span>
+                            <span id="sum-range-label" style="color: var(--purple);"></span>
+                        </div>
+                        <div class="setting-inputs">
+                            <input type="number" id="filter-sum-min" class="setting-input" placeholder="最小">
+                            <span>〜</span>
+                            <input type="number" id="filter-sum-max" class="setting-input" placeholder="最大">
+                        </div>
+                    </div>
+
+                    <!-- 奇偶比率フィルター -->
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>① 奇偶バランス (A級)</span>
+                            <span>許可する構成</span>
+                        </div>
+                        <div class="checkbox-group" id="parity-checkboxes">
+                            <!-- JSで動的に構築 -->
+                        </div>
+                    </div>
+
+                    <!-- 引っ張りフィルター -->
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>③ 同位置引っ張り (A級)</span>
+                            <span>許可する重複個数</span>
+                        </div>
+                        <div class="checkbox-group" id="pull-checkboxes">
+                            <!-- JSで動的に構築 -->
+                        </div>
+                    </div>
+
+                    <!-- スライドフィルター -->
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>⑦ 同位置スライド±1 (B級)</span>
+                            <span>許可する遷移個数</span>
+                        </div>
+                        <div class="checkbox-group" id="slide-checkboxes">
+                            <!-- JSで動的に構築 -->
+                        </div>
+                    </div>
+
+                    <!-- 連番フィルター -->
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>⑤ 隣接桁の連番 (A級)</span>
+                            <span>連番制限</span>
+                        </div>
+                        <select id="filter-consecutive" class="setting-input" style="width: 100%;">
+                            <option value="any">制限なし (連番あり・なし両方許可)</option>
+                            <option value="require">連番（差1の隣接ペア）ありのみ許可</option>
+                            <option value="exclude">連番（差1の隣接ペア）なしのみ許可</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- メイン実行ボタン -->
+            <button class="btn-main" onclick="runAnalysis()">合議解析 ＆ 排除実行</button>
+
+            <!-- データ管理ボタン -->
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-sub" onclick="syncWithAPIServer()" id="btn-sync-api" style="flex: 1.2;">🔄 最新結果を自動更新</button>
+                <button class="btn-sub" onclick="openImportModal()" style="flex: 0.8;">📥 データ入力</button>
+            </div>
+            
+            <div id="sync-status-msg" style="font-size: 0.65rem; text-align: center; color: var(--text-muted); margin-top: -12px; display: none;"></div>
+
+            <!-- 分析結果エリア -->
+            <div id="resultArea" style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- AI排除ボード (桁別) -->
+                <div class="flow-card">
+                    <div class="section-title" style="color: var(--purple);">
+                        <span>🚫</span> 桁別合議排除ボード (EXCLUSION BOARD)
+                    </div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: -10px; margin-bottom: 12px; line-height: 1.4;">
+                        過去40回の位置別EMA期待値（％）が表示されています。タップすると手動でその桁の数字を個別に排除・復活できます。
+                    </div>
+                    
+                    <div class="digits-container" id="digitsBoard">
+                        <!-- JSで動的に桁ごとの0〜9グリッドを生成 -->
+                    </div>
+                </div>
+
+                <!-- 厳選予想リスト -->
+                <div class="flow-card">
+                    <div class="section-title" style="color: var(--success);">
+                        <span>🚀</span> サバイバー厳選予想 (総合スコア上位5点)
+                    </div>
+                    
+                    <div class="stat-grid" id="exclusionStats" style="display: none;">
+                        <div class="stat-card">
+                            <div class="stat-desc">排除された買い目</div>
+                            <div class="stat-val" id="stat-excluded-rate" style="color: var(--exclude);">0.0%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-desc">生き残った買い目</div>
+                            <div class="stat-val" id="stat-survived-count" style="color: var(--success);">0</div>
+                        </div>
+                    </div>
+
+                    <div id="predictionList">
+                        <div class="prediction-item" style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 20px;">
+                            「合議解析 ＆ 排除実行」ボタンを押すと予想が表示されます。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- バックテストタブ -->
+        <div id="tabContent-backtest" style="display: none; flex-direction: column; gap: 20px;">
+            <div class="flow-card">
+                <div class="section-title" style="color: var(--purple);">📈 過去履歴による検証 (BACKTEST)</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+                    現在のフィルター設定（手動排除を除く）を用いて、過去の特定回数分を対象に「その回の前日時点のデータで予想を行い、当選番号を捕捉できていたか」をシミュレーションします。
+                </div>
+                
+                <div class="setting-item" style="margin-bottom: 16px;">
+                    <div class="setting-label">検証する回数（直近から遡る回数）</div>
+                    <div class="setting-inputs">
+                        <input type="number" id="backtest-rounds" class="setting-input" value="30" min="5" max="60">
+                        <button class="btn-main" onclick="runBacktest()" style="width: auto; padding: 10px 20px;">検証実行</button>
+                    </div>
+                </div>
+
+                <!-- プログレスバー -->
+                <div id="bt-progress-container" style="display: none; margin-bottom: 16px;">
+                    <div style="font-size: 0.7rem; display: flex; justify-content: space-between; color: var(--text-muted);">
+                        <span>シミュレーション進行中...</span>
+                        <span id="bt-progress-percent">0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="bt-progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- 検証結果サマリー -->
+                <div id="bt-result-summary" style="display: none; flex-direction: column; gap: 15px;">
+                    <div style="font-size: 0.8rem; font-weight: 800; color: #fff;">📊 バックテスト統計結果</div>
+                    
+                    <div class="backtest-summary">
+                        <div class="bt-card">
+                            <span class="bt-lbl">生存プール捕捉率 (キャプチャー率)</span>
+                            <span class="bt-val" id="bt-res-capture" style="color: var(--purple);">0.0%</span>
+                        </div>
+                        <div class="bt-card">
+                            <span class="bt-lbl">平均生存組み合わせ数</span>
+                            <span class="bt-val" id="bt-res-avg-survive" style="color: #fff;">0</span>
+                        </div>
+                        <div class="bt-card">
+                            <span class="bt-lbl">厳選5点 ストレート的中数</span>
+                            <span class="bt-val" id="bt-res-straight" style="color: var(--success);">0 回</span>
+                        </div>
+                        <div class="bt-card">
+                            <span class="bt-lbl">厳選5点 ボックス的中数</span>
+                            <span class="bt-val" id="bt-res-box" style="color: var(--blue);">0 回</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 検証ログ -->
+                <div id="bt-log-section" style="display: none; flex-direction: column; gap: 8px;">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: var(--text-muted);">📋 詳細検証ログ</div>
+                    <div class="bt-log-container" id="bt-log-list">
+                        <!-- JSで動的に追加 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">Powered by NUMBERS_ANALYZER Core</div>
+    </div>
+
+    <!-- データ入力モーダル -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <h4 class="modal-title">📥 データ手動入力・インポート</h4>
+            
+            <div class="tab-container" style="border-bottom-width: 1px;">
+                <div class="tab-btn active" id="modal-tab-manual" onclick="switchModalTab('manual')" style="font-size: 0.75rem; padding: 6px 0;">1件追加</div>
+                <div class="tab-btn" id="modal-tab-csv" onclick="switchModalTab('csv')" style="font-size: 0.75rem; padding: 6px 0;">コピペ/CSV</div>
+            </div>
+
+            <!-- 手動1件追加 -->
+            <div id="modalContent-manual" style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="setting-item">
+                    <label class="setting-label">回号</label>
+                    <input type="number" id="input-round" class="setting-input" placeholder="例: 6997">
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">抽選日</label>
+                    <input type="date" id="input-date" class="setting-input">
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">当選番号（スペースやカンマ区切り、または連続して入力）</label>
+                    <input type="text" id="input-numbers" class="setting-input" placeholder="例: 9271 または 9 2 7 1">
+                </div>
+            </div>
+
+            <!-- コピペ一括追加 -->
+            <div id="modalContent-csv" style="display: none; flex-direction: column; gap: 10px;">
+                <div style="font-size: 0.65rem; color: var(--text-muted); line-height: 1.4;">
+                    CSVフォーマット、または「回号 抽選日 当選番号」の形式でコピペしてください。改行区切りで複数行登録できます。<br>
+                    例:<br>
+                    6997,2026-06-03,9,2,7,1<br>
+                    6996 2026-06-02 625
+                </div>
+                <textarea id="input-csv-text" class="setting-input" rows="8" style="font-family: monospace; font-size: 0.7rem; resize: none;" placeholder="ここに貼り付けてください"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <button class="btn-sub" onclick="closeImportModal()" style="flex: 1;">キャンセル</button>
+                <button class="btn-main" onclick="saveImportedData()" style="flex: 1; padding: 10px;">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 履歴データロード用のJSファイル -->
+    <script src="numbers_data.js"></script>
+
+    <script>
+        // ゲーム別の設定（構造解析用パラメーター）
+        const GAME_CONFIG = {
+            n4: {
+                digits: 4,
+                digitLabels: ['千の位', '百の位', '十の位', '一の位'],
+                maxVal: 9,
+                sumRange: [18, 22], // 黄金ゾーン推奨デフォルト
+                parityMax: 4,       // 0〜4奇
+                defaultParity: [2], // 2奇:2偶 (最多38.4%)
+                defaultPull: [1],   // 同位置1桁引っ張り
+                defaultSlide: [1, 2, 3], // 1〜3桁スライド
+            },
+            n3: {
+                digits: 3,
+                digitLabels: ['百の位', '十の位', '一の位'],
+                maxVal: 9,
+                sumRange: [13, 16], // 黄金ゾーン推奨デフォルト
+                parityMax: 3,       // 0〜3奇
+                defaultParity: [1, 2], // 1奇:2偶 または 2奇:1偶
+                defaultPull: [1],   // 同位置1桁引っ張り
+                defaultSlide: [1, 2, 3], // 1〜3桁スライド
+            }
+        };
+
+        let selectedGame = 'n4';
+        let currentTab = 'predict';
+        let modalTab = 'manual';
+        
+        // メモリ上のデータ履歴
+        let activeHistory = { n3: [], n4: [] };
+        
+        // 手動排除した数字のセット { position_index: Set(digits) }
+        let manualExclusions = {
+            n3: { 0: new Set(), 1: new Set(), 2: new Set() },
+            n4: { 0: new Set(), 1: new Set(), 2: new Set(), 3: new Set() }
+        };
+
+        // フィルター設定のアクティブ状態
+        let filterSettings = {
+            n3: { sumMin: 13, sumMax: 16, parity: [1, 2], pull: [1], slide: [1, 2, 3], consecutive: 'any' },
+            n4: { sumMin: 18, sumMax: 22, parity: [2], pull: [1], slide: [1, 2, 3], consecutive: 'any' }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initHistoryData();
+            checkConsent();
+            // 初期画面描画
+            renderSettingsPanel();
+            renderDigitsBoard();
+        });
+
+        function checkConsent() {
+            if (localStorage.getItem('numbers_analyzer_consent') === 'true') {
+                document.getElementById('disclaimerOverlay').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'flex';
+            }
+        }
+
+        function agreeDisclaimer() {
+            localStorage.setItem('numbers_analyzer_consent', 'true');
+            document.getElementById('disclaimerOverlay').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'flex';
+        }
+
+        // データの統合・マージ処理
+        function initHistoryData() {
+            let defaultN3 = [];
+            let defaultN4 = [];
+            
+            if (typeof DEFAULT_NUMBERS_DATA !== 'undefined') {
+                defaultN3 = DEFAULT_NUMBERS_DATA.n3 || [];
+                defaultN4 = DEFAULT_NUMBERS_DATA.n4 || [];
+            }
+            
+            // localStorageからカスタム入力履歴を読み込み
+            let cachedN3 = [];
+            let cachedN4 = [];
+            const userHistoryRaw = localStorage.getItem('numbers_analyzer_user_history');
+            if (userHistoryRaw) {
+                try {
+                    const parsed = JSON.parse(userHistoryRaw);
+                    cachedN3 = parsed.n3 || [];
+                    cachedN4 = parsed.n4 || [];
+                } catch (e) {
+                    console.error("Failed to parse user history cache", e);
+                }
+            }
+            
+            // マージ（回号重複を排除）
+            activeHistory.n3 = mergeHistoryArrays(defaultN3, cachedN3);
+            activeHistory.n4 = mergeHistoryArrays(defaultN4, cachedN4);
+        }
+
+        function mergeHistoryArrays(arr1, arr2) {
+            const map = new Map();
+            arr1.forEach(item => map.set(item.round, item));
+            arr2.forEach(item => map.set(item.round, item));
+            const merged = Array.from(map.values());
+            merged.sort((a, b) => b.round - a.round); // 降順
+            return merged;
+        }
+
+        function saveUserHistoryToCache(game, newItem) {
+            const userHistoryRaw = localStorage.getItem('numbers_analyzer_user_history') || '{"n3":[],"n4":[]}';
+            let parsed = { n3: [], n4: [] };
+            try {
+                parsed = JSON.parse(userHistoryRaw);
+            } catch(e) {}
+            
+            if (game === 'n3') {
+                parsed.n3.push(newItem);
+            } else {
+                parsed.n4.push(newItem);
+            }
+            
+            localStorage.setItem('numbers_analyzer_user_history', JSON.stringify(parsed));
+            initHistoryData(); // 再ロードしてマージ
+        }
+
+        function saveMultipleUserHistoryToCache(game, items) {
+            const userHistoryRaw = localStorage.getItem('numbers_analyzer_user_history') || '{"n3":[],"n4":[]}';
+            let parsed = { n3: [], n4: [] };
+            try {
+                parsed = JSON.parse(userHistoryRaw);
+            } catch(e) {}
+            
+            if (game === 'n3') {
+                parsed.n3 = parsed.n3.concat(items);
+            } else {
+                parsed.n4 = parsed.n4.concat(items);
+            }
+            
+            localStorage.setItem('numbers_analyzer_user_history', JSON.stringify(parsed));
+            initHistoryData(); // 再ロードしてマージ
+        }
+
+        // タブ切り替え
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            const contents = ['predict', 'backtest'];
+            contents.forEach(id => {
+                document.getElementById(`tabContent-${id}`).style.display = (id === tabId) ? 'flex' : 'none';
+            });
+        }
+
+        function selectGame(game) {
+            selectedGame = game;
+            document.querySelectorAll('.game-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-game-${game}`).classList.add('active');
+            
+            renderSettingsPanel();
+            renderDigitsBoard();
+            
+            // 結果エリアのクリーンアップ
+            document.getElementById('predictionList').innerHTML = `
+                <div class="prediction-item" style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 20px;">
+                    「合議解析 ＆ 排除実行」ボタンを押すと予想が表示されます。
+                </div>
+            `;
+            document.getElementById('exclusionStats').style.display = 'none';
+            document.getElementById('bt-result-summary').style.display = 'none';
+            document.getElementById('bt-log-section').style.display = 'none';
+            document.getElementById('bt-progress-container').style.display = 'none';
+        }
+
+        // アコーディオン開閉
+        function toggleSettings() {
+            const content = document.getElementById('settings-content');
+            const arrow = document.getElementById('settings-arrow');
+            if (content.style.display === 'flex') {
+                content.style.display = 'none';
+                arrow.innerText = '▼ 開く';
+            } else {
+                content.style.display = 'flex';
+                arrow.innerText = '▲ 閉じる';
+            }
+        }
+
+        // 設定パネルの動的描画
+        function renderSettingsPanel() {
+            const config = GAME_CONFIG[selectedGame];
+            const filter = filterSettings[selectedGame];
+            
+            // 合計値範囲
+            document.getElementById('filter-sum-min').value = filter.sumMin;
+            document.getElementById('filter-sum-max').value = filter.sumMax;
+            document.getElementById('sum-range-label').innerText = `(黄金ゾーン推奨: ${config.sumRange[0]}〜${config.sumRange[1]})`;
+            
+            // 奇偶バランスチェックボックス
+            const parityContainer = document.getElementById('parity-checkboxes');
+            parityContainer.innerHTML = '';
+            for (let odd = 0; odd <= config.parityMax; odd++) {
+                const even = config.digits - odd;
+                const ratioStr = `${odd}奇:${even}偶`;
+                const btn = document.createElement('div');
+                btn.className = `checkbox-btn ${filter.parity.includes(odd) ? 'checked' : ''}`;
+                btn.innerText = ratioStr;
+                btn.onclick = () => {
+                    if (filter.parity.includes(odd)) {
+                        filter.parity = filter.parity.filter(x => x !== odd);
+                    } else {
+                        filter.parity.push(odd);
+                    }
+                    btn.classList.toggle('checked');
+                };
+                parityContainer.appendChild(btn);
+            }
+            
+            // 引っ張りチェックボックス
+            const pullContainer = document.getElementById('pull-checkboxes');
+            pullContainer.innerHTML = '';
+            for (let c = 0; c <= config.digits; c++) {
+                const btn = document.createElement('div');
+                btn.className = `checkbox-btn ${filter.pull.includes(c) ? 'checked' : ''}`;
+                btn.innerText = `${c}桁`;
+                btn.onclick = () => {
+                    if (filter.pull.includes(c)) {
+                        filter.pull = filter.pull.filter(x => x !== c);
+                    } else {
+                        filter.pull.push(c);
+                    }
+                    btn.classList.toggle('checked');
+                };
+                pullContainer.appendChild(btn);
+            }
+            
+            // スライドチェックボックス
+            const slideContainer = document.getElementById('slide-checkboxes');
+            slideContainer.innerHTML = '';
+            for (let c = 0; c <= config.digits; c++) {
+                const btn = document.createElement('div');
+                btn.className = `checkbox-btn ${filter.slide.includes(c) ? 'checked' : ''}`;
+                btn.innerText = `${c}桁`;
+                btn.onclick = () => {
+                    if (filter.slide.includes(c)) {
+                        filter.slide = filter.slide.filter(x => x !== c);
+                    } else {
+                        filter.slide.push(c);
+                    }
+                    btn.classList.toggle('checked');
+                };
+                slideContainer.appendChild(btn);
+            }
+
+            // 連番セレクトボックス
+            document.getElementById('filter-consecutive').value = filter.consecutive;
+        }
+
+        // 桁別ボードの描画 (位置別EMAの計算を伴う)
+        function renderDigitsBoard() {
+            const container = document.getElementById('digitsBoard');
+            container.innerHTML = '';
+            
+            const config = GAME_CONFIG[selectedGame];
+            const history = activeHistory[selectedGame];
+            
+            // EMA期待値の計算
+            const emaScores = calculateEMAMomentum(selectedGame, history);
+            
+            for (let d = 0; d < config.digits; d++) {
+                const col = document.createElement('div');
+                col.className = 'digit-column';
+                
+                const label = config.digitLabels ? config.digitLabels[d] : `第 ${d + 1} 桁`;
+                col.innerHTML = `
+                    <div class="digit-header">
+                        <span>${label}</span>
+                        <span style="font-size: 0.6rem; color: var(--text-muted);">位置別EMA期待値（％）</span>
+                    </div>
+                `;
+                
+                const grid = document.createElement('div');
+                grid.className = 'digit-grid';
+                
+                const posScores = emaScores[d] || {};
+                
+                // EMA期待値の高い順に視覚効果を与えるための閾値算出
+                const scoresList = Object.values(posScores);
+                const maxEMA = Math.max(...scoresList);
+                const minEMA = Math.min(...scoresList);
+                const avgEMA = scoresList.reduce((a,b)=>a+b, 0) / 10;
+                
+                for (let n = 0; n <= 9; n++) {
+                    const emaVal = posScores[n] || 0.0;
+                    const emaPercent = (emaVal * 100).toFixed(1);
+                    
+                    const box = document.createElement('div');
+                    
+                    // 初期クラス決定
+                    let boxClass = 'num-box';
+                    if (manualExclusions[selectedGame][d].has(n)) {
+                        boxClass += ' excluded';
+                    } else if (emaVal > avgEMA && emaVal > 0.1) {
+                        boxClass += ' hot-digit';
+                    }
+                    
+                    box.className = boxClass;
+                    box.innerHTML = `
+                        <span class="num-val">${n}</span>
+                        <span class="num-ema">${emaPercent}%</span>
+                    `;
+                    
+                    box.onclick = () => {
+                        if (manualExclusions[selectedGame][d].has(n)) {
+                            manualExclusions[selectedGame][d].delete(n);
+                            box.className = 'num-box';
+                            if (emaVal > avgEMA && emaVal > 0.1) {
+                                box.classList.add('hot-digit');
+                            }
+                        } else {
+                            manualExclusions[selectedGame][d].add(n);
+                            box.className = 'num-box excluded';
+                        }
+                    };
+                    grid.appendChild(box);
+                }
+                
+                col.appendChild(grid);
+                container.appendChild(col);
+            }
+        }
+
+        // 位置別EMA期待値 (span=8) の算出
+        function calculateEMAMomentum(game, history) {
+            const config = GAME_CONFIG[game];
+            const pick = config.digits;
+            const limit = 40; // 直近40回分
+            
+            // 直近40回分を古い順にソートして計算
+            const draws = history.slice(0, limit).reverse();
+            const emaScores = [];
+            
+            for (let p = 0; p < pick; p++) {
+                const posScores = {};
+                for (let digit = 0; digit <= 9; digit++) {
+                    const series = draws.map(draw => {
+                        if (draw.numbers && draw.numbers.length > p) {
+                            return draw.numbers[p] === digit ? 1.0 : 0.0;
+                        }
+                        return 0.0;
+                    });
+                    
+                    posScores[digit] = calculateEMA(series, 8); // span=8
+                }
+                emaScores.push(posScores);
+            }
+            return emaScores;
+        }
+
+        function calculateEMA(series, span) {
+            if (!series || series.length === 0) return 0.0;
+            const alpha = 2.0 / (span + 1);
+            let val = series[0];
+            for (let i = 1; i < series.length; i++) {
+                val = alpha * series[i] + (1 - alpha) * val;
+            }
+            return val;
+        }
+
+        // 最新のフィルター設定をGUIから反映
+        function readFilterSettingsFromGUI() {
+            const filter = filterSettings[selectedGame];
+            
+            filter.sumMin = parseInt(document.getElementById('filter-sum-min').value) || 0;
+            filter.sumMax = parseInt(document.getElementById('filter-sum-max').value) || 0;
+            filter.consecutive = document.getElementById('filter-consecutive').value;
+            
+            // チェックボックスは動的バインドされているため、filterSettings[selectedGame] に直接同期済みです。
+        }
+
+        // メイン解析＆排除処理
+        function runAnalysis() {
+            readFilterSettingsFromGUI();
+            const config = GAME_CONFIG[selectedGame];
+            const history = activeHistory[selectedGame];
+            
+            if (history.length < 2) {
+                alert("解析を行うための十分な当選履歴データがありません。");
+                return;
+            }
+            
+            const prevDraw = history[0];
+            const filter = filterSettings[selectedGame];
+            const manualExcl = manualExclusions[selectedGame];
+            
+            // 位置別期待値EMAの計算
+            const emaScores = calculateEMAMomentum(selectedGame, history);
+            
+            // 組み合わせ総数決定
+            const totalCombosCount = selectedGame === 'n4' ? 10000 : 1000;
+            const survivors = [];
+            
+            // ループを回して全組み合わせを多段階検証
+            for (let i = 0; i < totalCombosCount; i++) {
+                const combo = parseIndexToCombo(i, config.digits);
+                
+                // 1. 手動排除フィルター
+                let isExcluded = false;
+                for (let p = 0; p < config.digits; p++) {
+                    if (manualExcl[p].has(combo[p])) {
+                        isExcluded = true;
+                        break;
+                    }
+                }
+                if (isExcluded) continue;
+                
+                // 2. 合計値フィルター
+                const totalSum = combo.reduce((a, b) => a + b, 0);
+                if (totalSum < filter.sumMin || totalSum > filter.sumMax) continue;
+                
+                // 3. 奇偶フィルター
+                const oddCount = combo.filter(n => n % 2 !== 0).length;
+                if (!filter.parity.includes(oddCount)) continue;
+                
+                // 4. 引っ張りフィルター
+                let pullCount = 0;
+                for (let p = 0; p < config.digits; p++) {
+                    if (combo[p] === prevDraw.numbers[p]) {
+                        pullCount++;
+                    }
+                }
+                if (!filter.pull.includes(pullCount)) continue;
+                
+                // 5. スライドフィルター
+                let slideCount = 0;
+                for (let p = 0; p < config.digits; p++) {
+                    // 引っ張りの桁はスライド判定対象から除外
+                    if (combo[p] === prevDraw.numbers[p]) continue;
+                    
+                    const prevVal = prevDraw.numbers[p];
+                    const nextVal = (prevVal + 1) % 10;
+                    const prevValMinus = (prevVal - 1 + 10) % 10;
+                    
+                    if (combo[p] === nextVal || combo[p] === prevValMinus) {
+                        slideCount++;
+                    }
+                }
+                if (!filter.slide.includes(slideCount)) continue;
+                
+                // 6. 連番フィルター
+                let hasConsecutive = false;
+                for (let p = 0; p < config.digits - 1; p++) {
+                    if (Math.abs(combo[p] - combo[p+1]) === 1) {
+                        hasConsecutive = true;
+                        break;
+                    }
+                }
+                if (filter.consecutive === 'require' && !hasConsecutive) continue;
+                if (filter.consecutive === 'exclude' && hasConsecutive) continue;
+                
+                // --- 全ての静的・動的フィルターをクリア（生存） ---
+                
+                // スコアリング (EMAベース値)
+                let baseEMAScore = 0.0;
+                for (let p = 0; p < config.digits; p++) {
+                    baseEMAScore += (emaScores[p] ? (emaScores[p][combo[p]] || 0) : 0);
+                }
+                
+                // 構造解析ルールボーナス加点
+                let ruleBonus = 0.0;
+                
+                // 黄金合計値加点 (+1.0)
+                if (totalSum >= config.sumRange[0] && totalSum <= config.sumRange[1]) {
+                    ruleBonus += 1.0;
+                }
+                // 黄金奇偶バランス加点 (+1.0)
+                if (selectedGame === 'n4' && oddCount === 2) ruleBonus += 1.0;
+                if (selectedGame === 'n3' && (oddCount === 1 || oddCount === 2)) ruleBonus += 1.0;
+                
+                // 黄金引っ張り加点 (+1.0)
+                if (pullCount === 1 || pullCount === 2) {
+                    ruleBonus += 1.0;
+                }
+                // 黄金スライド加点 (+1.5)
+                if (slideCount >= 1 && slideCount <= 3) {
+                    ruleBonus += 1.5;
+                }
+                // 連番加点 (+1.0)
+                if (hasConsecutive) {
+                    ruleBonus += 1.0;
+                }
+                
+                survivors.push({
+                    combo: combo,
+                    sum: totalSum,
+                    finalScore: baseEMAScore + ruleBonus
+                });
+            }
+            
+            // 総合スコアの高い順にソート
+            survivors.sort((a, b) => b.finalScore - a.finalScore);
+            
+            // 統計データの更新
+            const excludedCount = totalCombosCount - survivors.length;
+            const excludedRate = ((excludedCount / totalCombosCount) * 100).toFixed(1);
+            
+            document.getElementById('stat-excluded-rate').innerText = `${excludedRate}%`;
+            document.getElementById('stat-survived-count').innerText = `${survivors.length} 通り`;
+            document.getElementById('exclusionStats').style.display = 'grid';
+            
+            // 予想リストの描画
+            const predList = document.getElementById('predictionList');
+            predList.innerHTML = '';
+            
+            if (survivors.length === 0) {
+                predList.innerHTML = `
+                    <div class="prediction-item" style="text-align: center; color: var(--exclude); font-size: 0.8rem; padding: 20px; font-weight: bold;">
+                        ⚠️ 生存した組み合わせがありません。フィルター条件を緩和してください。
+                    </div>
+                `;
+                return;
+            }
+            
+            // 上位5点出力
+            const displayCount = Math.min(5, survivors.length);
+            for (let i = 0; i < displayCount; i++) {
+                const itemData = survivors[i];
+                const item = document.createElement('div');
+                item.className = 'prediction-item';
+                
+                const numsDiv = document.createElement('div');
+                numsDiv.className = 'prediction-nums';
+                itemData.combo.forEach(n => {
+                    const box = document.createElement('div');
+                    box.className = 'pred-box';
+                    box.innerText = n;
+                    numsDiv.appendChild(box);
+                });
+                
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 6px;">
+                        <span style="color: var(--purple); font-weight: 900;">サバイバー厳選予想 [${i+1}]</span>
+                        <span>構造解析合計値: ${itemData.sum} (Score: ${itemData.finalScore.toFixed(3)})</span>
+                    </div>
+                `;
+                item.appendChild(numsDiv);
+                predList.appendChild(item);
+            }
+            
+            // 排除された桁を反映するために桁別ボードも再レンダリング
+            renderDigitsBoard();
+        }
+
+        // 数値を組み合わせ配列に展開
+        function parseIndexToCombo(idx, digits) {
+            const combo = [];
+            let val = idx;
+            for (let p = digits - 1; p >= 0; p--) {
+                const divisor = Math.pow(10, p);
+                const digit = Math.floor(val / divisor);
+                combo.push(digit);
+                val %= divisor;
+            }
+            return combo;
+        }
+
+        // ==========================================
+        //  バックテスト検証シミュレータ
+        // ==========================================
+        function runBacktest() {
+            readFilterSettingsFromGUI();
+            const config = GAME_CONFIG[selectedGame];
+            const history = activeHistory[selectedGame];
+            const backtestRounds = parseInt(document.getElementById('backtest-rounds').value) || 30;
+            
+            if (history.length < backtestRounds + 2) {
+                alert(`データ件数が不足しています。検証には最低 ${backtestRounds + 2} 回分の過去結果が必要です。`);
+                return;
+            }
+            
+            // UI表示の開始
+            const progressContainer = document.getElementById('bt-progress-container');
+            const progressFill = document.getElementById('bt-progress-fill');
+            const progressPercent = document.getElementById('bt-progress-percent');
+            const resultSummary = document.getElementById('bt-result-summary');
+            const logSection = document.getElementById('bt-log-section');
+            const logList = document.getElementById('bt-log-list');
+            
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressPercent.innerText = '0%';
+            resultSummary.style.display = 'none';
+            logSection.style.display = 'none';
+            logList.innerHTML = '';
+            
+            let straightHits = 0;
+            let boxHits = 0;
+            let capturedCount = 0;
+            let totalSurvivedCombos = 0;
+            
+            const logs = [];
+            const totalCombosCount = selectedGame === 'n4' ? 10000 : 1000;
+            const filter = filterSettings[selectedGame];
+            
+            // シミュレーション実行
+            setTimeout(() => {
+                for (let r = 0; r < backtestRounds; r++) {
+                    const targetIndex = r;
+                    const targetDraw = history[targetIndex]; // 当選検証対象の回
+                    const prevDraw = history[targetIndex + 1]; // 対象回から見た「前回」
+                    
+                    // シミュレーション時の履歴スライス（検証対象回より「過去」のデータのみを用いる）
+                    const simHistory = history.slice(targetIndex + 1);
+                    const emaScores = calculateEMAMomentum(selectedGame, simHistory);
+                    
+                    const survivors = [];
+                    
+                    // 組み合わせ排除の実行（手動排除は除外）
+                    for (let i = 0; i < totalCombosCount; i++) {
+                        const combo = parseIndexToCombo(i, config.digits);
+                        
+                        // 2. 合計値フィルター
+                        const totalSum = combo.reduce((a, b) => a + b, 0);
+                        if (totalSum < filter.sumMin || totalSum > filter.sumMax) continue;
+                        
+                        // 3. 奇偶フィルター
+                        const oddCount = combo.filter(n => n % 2 !== 0).length;
+                        if (!filter.parity.includes(oddCount)) continue;
+                        
+                        // 4. 引っ張りフィルター
+                        let pullCount = 0;
+                        for (let p = 0; p < config.digits; p++) {
+                            if (combo[p] === prevDraw.numbers[p]) {
+                                pullCount++;
+                            }
+                        }
+                        if (!filter.pull.includes(pullCount)) continue;
+                        
+                        // 5. スライドフィルター
+                        let slideCount = 0;
+                        for (let p = 0; p < config.digits; p++) {
+                            if (combo[p] === prevDraw.numbers[p]) continue;
+                            const prevVal = prevDraw.numbers[p];
+                            const nextVal = (prevVal + 1) % 10;
+                            const prevValMinus = (prevVal - 1 + 10) % 10;
+                            if (combo[p] === nextVal || combo[p] === prevValMinus) {
+                                slideCount++;
+                            }
+                        }
+                        if (!filter.slide.includes(slideCount)) continue;
+                        
+                        // 6. 連番フィルター
+                        let hasConsecutive = false;
+                        for (let p = 0; p < config.digits - 1; p++) {
+                            if (Math.abs(combo[p] - combo[p+1]) === 1) {
+                                hasConsecutive = true;
+                                break;
+                            }
+                        }
+                        if (filter.consecutive === 'require' && !hasConsecutive) continue;
+                        if (filter.consecutive === 'exclude' && hasConsecutive) continue;
+                        
+                        // スコアリング
+                        let baseEMAScore = 0.0;
+                        for (let p = 0; p < config.digits; p++) {
+                            baseEMAScore += (emaScores[p] ? (emaScores[p][combo[p]] || 0) : 0);
+                        }
+                        let ruleBonus = 0.0;
+                        if (totalSum >= config.sumRange[0] && totalSum <= config.sumRange[1]) ruleBonus += 1.0;
+                        if (selectedGame === 'n4' && oddCount === 2) ruleBonus += 1.0;
+                        if (selectedGame === 'n3' && (oddCount === 1 || oddCount === 2)) ruleBonus += 1.0;
+                        if (pullCount === 1 || pullCount === 2) ruleBonus += 1.0;
+                        if (slideCount >= 1 && slideCount <= 3) ruleBonus += 1.5;
+                        if (hasConsecutive) ruleBonus += 1.0;
+                        
+                        survivors.push({
+                            combo: combo,
+                            sum: totalSum,
+                            finalScore: baseEMAScore + ruleBonus
+                        });
+                    }
+                    
+                    // スコアソート
+                    survivors.sort((a, b) => b.finalScore - a.finalScore);
+                    totalSurvivedCombos += survivors.length;
+                    
+                    // 的中検証
+                    const winningCombo = targetDraw.numbers;
+                    const winningStr = winningCombo.join('');
+                    
+                    // 生存プール捕捉（キャプチャー）判定
+                    let isCaptured = false;
+                    for (let s = 0; s < survivors.length; s++) {
+                        if (compareCombos(survivors[s].combo, winningCombo)) {
+                            isCaptured = true;
+                            break;
+                        }
+                    }
+                    if (isCaptured) capturedCount++;
+                    
+                    // 厳選5点 的中判定
+                    let isStraight = false;
+                    let isBox = false;
+                    const topPredictions = survivors.slice(0, 5).map(x => x.combo);
+                    
+                    for (let p = 0; p < topPredictions.length; p++) {
+                        const pred = topPredictions[p];
+                        if (compareCombos(pred, winningCombo)) {
+                            isStraight = true;
+                            isBox = true; // ストレートはボックス条件も内包
+                            break;
+                        } else if (compareCombosBox(pred, winningCombo)) {
+                            isBox = true;
+                        }
+                    }
+                    
+                    if (isStraight) straightHits++;
+                    if (isBox && !isStraight) boxHits++; // 重複カウント防止
+                    
+                    // ログテキスト構築
+                    let outcomeBadge = '<span class="badge missed">Missed</span>';
+                    if (isStraight) {
+                        outcomeBadge = '<span class="badge straight">Straight</span>';
+                    } else if (isBox) {
+                        outcomeBadge = '<span class="badge box">Box</span>';
+                    } else if (isCaptured) {
+                        outcomeBadge = '<span class="badge captured">Captured</span>';
+                    }
+                    
+                    logs.push({
+                        round: targetDraw.round,
+                        winning: winningCombo.join(', '),
+                        survive: survivors.length,
+                        badge: outcomeBadge
+                    });
+                    
+                    // プログレス更新
+                    const percentVal = Math.round(((r + 1) / backtestRounds) * 100);
+                    progressFill.style.width = `${percentVal}%`;
+                    progressPercent.innerText = `${percentVal}%`;
+                }
+                
+                // 検証完了後のサマリー描画
+                progressContainer.style.display = 'none';
+                
+                const captureRate = ((capturedCount / backtestRounds) * 100).toFixed(1);
+                const avgSurvive = Math.round(totalSurvivedCombos / backtestRounds);
+                const straightRate = ((straightHits / backtestRounds) * 100).toFixed(1);
+                const boxRate = (((straightHits + boxHits) / backtestRounds) * 100).toFixed(1);
+                
+                document.getElementById('bt-res-capture').innerText = `${captureRate}%`;
+                document.getElementById('bt-res-avg-survive').innerText = `${avgSurvive} 通り`;
+                document.getElementById('bt-res-straight').innerText = `${straightHits} 回 (${straightRate}%)`;
+                document.getElementById('bt-res-box').innerText = `${straightHits + boxHits} 回 (${boxRate}%)`;
+                
+                resultSummary.style.display = 'flex';
+                
+                // 詳細ログ追加
+                logs.forEach(log => {
+                    const row = document.createElement('div');
+                    row.className = 'bt-log-row';
+                    row.innerHTML = `
+                        <span>第 ${log.round} 回</span>
+                        <span>当選: [${log.winning}]</span>
+                        <span>生存件数: ${log.survive}</span>
+                        ${log.badge}
+                    `;
+                    logList.appendChild(row);
+                });
+                logSection.style.display = 'flex';
+                
+            }, 300);
+        }
+
+        function compareCombos(c1, c2) {
+            if (c1.length !== c2.length) return false;
+            for (let i = 0; i < c1.length; i++) {
+                if (c1[i] !== c2[i]) return false;
+            }
+            return true;
+        }
+
+        function compareCombosBox(c1, c2) {
+            // ボックス判定 (並べ替えて一致するか)
+            const s1 = [...c1].sort().join('');
+            const s2 = [...c2].sort().join('');
+            return s1 === s2;
+        }
+
+        // ==========================================
+        //  データベース自動更新（GUIサーバーAPI疎通）
+        // ==========================================
+        async function syncWithAPIServer() {
+            const btn = document.getElementById('btn-sync-api');
+            const statusMsg = document.getElementById('sync-status-msg');
+            
+            btn.disabled = true;
+            btn.innerText = '同期中...';
+            statusMsg.style.display = 'block';
+            statusMsg.style.color = 'var(--text-muted)';
+            statusMsg.innerText = 'ローカルGUIサーバーと接続しています...';
+            
+            const gameApiName = selectedGame === 'n3' ? 'numbers3' : 'numbers4';
+            
+            try {
+                // ローカルサーバー上の最新100件のデータを取得
+                const response = await fetch(`http://127.0.0.1:5010/api/structure_analytics?game=${gameApiName}`);
+                if (!response.ok) {
+                    throw new Error(`Server returned status ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data && data.matrix && data.matrix.data) {
+                    const matrixData = data.matrix.data;
+                    const rounds = data.matrix.rounds; // 昇順の配列
+                    
+                    const syncItems = [];
+                    
+                    // API構造から history データにパース
+                    for (const rStr of Object.keys(matrixData)) {
+                        const roundNo = parseInt(rStr);
+                        const numbersArray = matrixData[rStr].map(x => x.val);
+                        
+                        // 日付は metrics から補完するかダミーを作成
+                        let dateStr = '';
+                        if (data.latest_draw && data.latest_draw.round === roundNo) {
+                            dateStr = data.latest_draw.date;
+                        } else if (data.metrics) {
+                            const found = data.metrics.find(x => x.round === roundNo);
+                            if (found && found.date) dateStr = found.date;
+                        }
+                        
+                        syncItems.push({
+                            round: roundNo,
+                            date: dateStr || '2026-XX-XX',
+                            numbers: numbersArray
+                        });
+                    }
+                    
+                    if (syncItems.length > 0) {
+                        saveMultipleUserHistoryToCache(selectedGame, syncItems);
+                        renderDigitsBoard();
+                        statusMsg.style.color = 'var(--success)';
+                        statusMsg.innerText = `同期完了！最新 第 ${rounds[rounds.length - 1]} 回までのデータを反映しました。`;
+                    } else {
+                        statusMsg.innerText = '同期する新しいデータがありません。';
+                    }
+                } else {
+                    throw new Error('Invalid JSON format from API');
+                }
+            } catch (e) {
+                console.warn(e);
+                statusMsg.style.color = 'var(--exclude)';
+                statusMsg.innerText = '自動更新に失敗しました（GUIサーバーが未起動、またはCORS制約）。手動データ入力を利用してください。';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '🔄 最新結果を自動更新';
+            }
+        }
+
+        // ==========================================
+        //  データ手動インポートモーダル
+        // ==========================================
+        function openImportModal() {
+            document.getElementById('importModal').style.display = 'flex';
+            document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+            switchModalTab('manual');
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').style.display = 'none';
+        }
+
+        function switchModalTab(tabId) {
+            modalTab = tabId;
+            document.querySelectorAll('#importModal .tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`modal-tab-${tabId}`).classList.add('active');
+            
+            document.getElementById('modalContent-manual').style.display = tabId === 'manual' ? 'flex' : 'none';
+            document.getElementById('modalContent-csv').style.display = tabId === 'csv' ? 'flex' : 'none';
+        }
+
+        function saveImportedData() {
+            const config = GAME_CONFIG[selectedGame];
+            
+            if (modalTab === 'manual') {
+                const roundVal = parseInt(document.getElementById('input-round').value);
+                const dateVal = document.getElementById('input-date').value;
+                const numbersRaw = document.getElementById('input-numbers').value;
+                
+                if (isNaN(roundVal) || !dateVal || !numbersRaw) {
+                    alert("全ての項目を正しく入力してください。");
+                    return;
+                }
+                
+                // 入力された文字をパース
+                const digits = numbersRaw.replace(/[\s,]/g, '').split('').map(Number);
+                if (digits.length !== config.digits || digits.some(isNaN)) {
+                    alert(`当選番号はちょうど ${config.digits} 桁の数字である必要があります。`);
+                    return;
+                }
+                
+                const newItem = {
+                    round: roundVal,
+                    date: dateVal,
+                    numbers: digits
+                };
+                
+                saveUserHistoryToCache(selectedGame, newItem);
+                alert(`第 ${roundVal} 回 を登録しました。`);
+                closeImportModal();
+                renderDigitsBoard();
+                
+            } else {
+                const text = document.getElementById('input-csv-text').value.trim();
+                if (!text) {
+                    alert("CSVデータを貼り付けてください。");
+                    return;
+                }
+                
+                const lines = text.split('\n');
+                const parsedItems = [];
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    // カンマ、スペース、タブ等で区切る
+                    const parts = line.split(/[,\s\t]+/);
+                    if (parts.length < 3) {
+                        // 1つの文字列として数字を探す
+                        const match = line.match(/^(\d+)\s+([\d-]+)\s+(\d+)$/);
+                        if (match) {
+                            const round = parseInt(match[1]);
+                            const date = match[2];
+                            const numStr = match[3].zfill(config.digits);
+                            const digits = numStr.split('').map(Number);
+                            if (digits.length === config.digits) {
+                                parsedItems.push({ round, date, numbers: digits });
+                            }
+                        }
+                        continue;
+                    }
+                    
+                    const round = parseInt(parts[0]);
+                    const date = parts[1];
+                    // 残りの数字を集める
+                    let numStr = parts.slice(2).join('');
+                    if (numStr.length !== config.digits) {
+                        continue;
+                    }
+                    const digits = numStr.split('').map(Number);
+                    
+                    if (!isNaN(round) && date && digits.length === config.digits && !digits.some(isNaN)) {
+                        parsedItems.push({
+                            round: round,
+                            date: date,
+                            numbers: digits
+                        });
+                    }
+                }
+                
+                if (parsedItems.length === 0) {
+                    alert("有効なデータを検出できませんでした。フォーマットを確認してください。");
+                    return;
+                }
+                
+                saveMultipleUserHistoryToCache(selectedGame, parsedItems);
+                alert(`${parsedItems.length} 件の履歴データをインポートしました。`);
+                closeImportModal();
+                renderDigitsBoard();
+            }
+        }
+        
+        // ヘルパー：ゼロ埋め
+        String.prototype.zfill = function(len) {
+            let str = this;
+            while(str.length < len) {
+                str = '0' + str;
+            }
+            return str;
+        };
+    </script>
+
+    <!-- Cloudflare Web Analytics -->
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b7f74bde365b4aa480344eac948b7e6b"}'></script>
+    <!-- End Cloudflare Web Analytics -->
+</body>
+</html>
