@@ -3,6 +3,15 @@
 const DEFAULT_NUMBERS_DATA = {
   "n3": [
     {
+      "round": 7024,
+      "date": "2026-07-10",
+      "numbers": [
+        0,
+        9,
+        7
+      ]
+    },
+    {
       "round": 7023,
       "date": "2026-07-09",
       "numbers": [
@@ -891,20 +900,21 @@ const DEFAULT_NUMBERS_DATA = {
         8,
         4,
         3
-      ]
-    },
-    {
-      "round": 6924,
-      "date": "2026-02-20",
-      "numbers": [
-        9,
-        1,
-        8
       ]
     }
   ],
   "n4": [
     {
+      "round": 7024,
+      "date": "2026-07-10",
+      "numbers": [
+        0,
+        4,
+        3,
+        0
+      ]
+    },
+    {
       "round": 7023,
       "date": "2026-07-09",
       "numbers": [
@@ -1892,16 +1902,6 @@ const DEFAULT_NUMBERS_DATA = {
         4,
         7,
         6
-      ]
-    },
-    {
-      "round": 6924,
-      "date": "2026-02-20",
-      "numbers": [
-        3,
-        1,
-        1,
-        5
       ]
     }
   ]
