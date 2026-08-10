@@ -66,14 +66,15 @@
         }
 
         header h1 {
-            font-size: 2rem;
+            font-size: clamp(1.2rem, 5.5vw, 1.5rem);
             font-weight: 900;
             margin: 0;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             background: linear-gradient(135deg, #ffffff 40%, var(--purple) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-shadow: 0 0 20px var(--purple-glow);
+            white-space: nowrap;
         }
 
         header .subtitle {
