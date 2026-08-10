@@ -1,5 +1,7 @@
 # ナンバーズ解析ツール (NUMBERS_ANALYZER)
 
+> **🌐 ライブデプロイ (Web公開URL)**: [https://tk030-lotto.github.io/numbers-predictor-lite/](https://tk030-lotto.github.io/numbers-predictor-lite/)
+
 本プロジェクトは、過去の当選結果データを基に、JavaScriptによる「構造解析7指標（ナンバーズ仕様）」を用いて出現確率の低い数字や組み合わせを「排除」し、期待値の高い組み合わせを厳選・分析する静的ウェブアプリケーションです。
 
 ---
