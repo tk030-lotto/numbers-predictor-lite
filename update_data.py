@@ -16,6 +16,11 @@ NUMBERS_CSV_URLS = {
     'n4': 'https://loto-life.net/csv/numbers4'
 }
 
+NUMBERS_BACKUP_URLS = {
+    'n3': 'https://tk030-lotto.github.io/lotto-data-hub/data/numbers3.json',
+    'n4': 'https://tk030-lotto.github.io/lotto-data-hub/data/numbers4.json'
+}
+
 def clean_val(val):
     if not isinstance(val, str):
         return val
@@ -29,7 +34,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     return df.map(clean_val)
 
 def fetch_and_parse_csv(game_key, url):
-    logger.info(f"Downloading CSV for {game_key} from {url}...")
+    logger.info(f"Downloading CSV for {game_key} from primary source ({url})...")
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
@@ -95,10 +100,35 @@ def fetch_and_parse_csv(game_key, url):
                 "date": date_str,
                 "numbers": numbers
             })
-        except Exception as e:
+        except Exception:
             continue
             
     # 回号の降順でソートし、最新の100回分を切り出す
+    parsed_history.sort(key=lambda x: x['round'], reverse=True)
+    return parsed_history[:100]
+
+def fetch_from_backup(game_key, url):
+    logger.info(f"Downloading JSON for {game_key} from backup source ({url})...")
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    
+    response = requests.get(url, headers=headers, timeout=15)
+    response.raise_for_status()
+    data = response.json()
+    
+    pick_count = 3 if game_key == 'n3' else 4
+    parsed_history = []
+    
+    for item in data:
+        nums = [int(n) for n in item["numbers"]]
+        if len(nums) == pick_count:
+            parsed_history.append({
+                "round": int(item["round"]),
+                "date": str(item["date"]).strip(),
+                "numbers": nums
+            })
+            
     parsed_history.sort(key=lambda x: x['round'], reverse=True)
     return parsed_history[:100]
 
@@ -108,16 +138,26 @@ def main():
     all_data = {}
     success_count = 0
     
-    for game_key, url in NUMBERS_CSV_URLS.items():
+    for game_key, primary_url in NUMBERS_CSV_URLS.items():
+        history = []
         try:
-            history = fetch_and_parse_csv(game_key, url)
-            if not history:
-                logger.error(f"No parsed data for {game_key}")
-                continue
+            history = fetch_and_parse_csv(game_key, primary_url)
+            logger.info(f"Successfully fetched {len(history)} records for {game_key} from primary source.")
+        except Exception as e:
+            logger.warning(f"Primary source for {game_key} failed: {e}. Trying backup source...")
+            backup_url = NUMBERS_BACKUP_URLS.get(game_key)
+            if backup_url:
+                try:
+                    history = fetch_from_backup(game_key, backup_url)
+                    logger.info(f"Successfully fetched {len(history)} records for {game_key} from backup source.")
+                except Exception as backup_e:
+                    logger.error(f"Backup source for {game_key} also failed: {backup_e}")
+                    
+        if history:
             all_data[game_key] = history
             success_count += 1
-        except Exception as e:
-            logger.error(f"Error updating {game_key}: {e}")
+        else:
+            logger.error(f"No data parsed for {game_key}")
             
     if success_count == len(NUMBERS_CSV_URLS):
         try:
