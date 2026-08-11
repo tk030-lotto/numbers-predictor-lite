@@ -1744,7 +1744,7 @@
         }
 
         // ==========================================
-        //  データベース自動更新（GUIサーバーAPI疎通）
+        //  データベース自動更新（ロトデータハブ疎通）
         // ==========================================
         async function syncWithAPIServer() {
             const btn = document.getElementById('btn-sync-api');
@@ -1754,60 +1754,38 @@
             btn.innerText = '同期中...';
             statusMsg.style.display = 'block';
             statusMsg.style.color = 'var(--text-muted)';
-            statusMsg.innerText = 'ローカルGUIサーバーと接続しています...';
+            statusMsg.innerText = 'ロトデータハブと接続中...';
             
             const gameApiName = selectedGame === 'n3' ? 'numbers3' : 'numbers4';
             
             try {
-                // ローカルサーバー上の最新100件のデータを取得
-                const response = await fetch(`http://127.0.0.1:5010/api/structure_analytics?game=${gameApiName}`);
+                // ロトデータハブから最新データを取得
+                const response = await fetch(`https://tk030-lotto.github.io/lotto-data-hub/data/${gameApiName}.json`);
                 if (!response.ok) {
-                    throw new Error(`Server returned status ${response.status}`);
+                    throw new Error(`サーバーレスポンスエラー ${response.status}`);
                 }
                 const data = await response.json();
                 
-                if (data && data.matrix && data.matrix.data) {
-                    const matrixData = data.matrix.data;
-                    const rounds = data.matrix.rounds; // 昇順の配列
+                if (Array.isArray(data) && data.length > 0) {
+                    const syncItems = data.map(item => ({
+                        round: parseInt(item.round),
+                        date: item.date || '',
+                        numbers: item.numbers.map(n => parseInt(n))
+                    }));
                     
-                    const syncItems = [];
+                    saveMultipleUserHistoryToCache(selectedGame, syncItems);
+                    renderDigitsBoard();
                     
-                    // API構造から history データにパース
-                    for (const rStr of Object.keys(matrixData)) {
-                        const roundNo = parseInt(rStr);
-                        const numbersArray = matrixData[rStr].map(x => x.val);
-                        
-                        // 日付は metrics から補完するかダミーを作成
-                        let dateStr = '';
-                        if (data.latest_draw && data.latest_draw.round === roundNo) {
-                            dateStr = data.latest_draw.date;
-                        } else if (data.metrics) {
-                            const found = data.metrics.find(x => x.round === roundNo);
-                            if (found && found.date) dateStr = found.date;
-                        }
-                        
-                        syncItems.push({
-                            round: roundNo,
-                            date: dateStr || '2026-XX-XX',
-                            numbers: numbersArray
-                        });
-                    }
-                    
-                    if (syncItems.length > 0) {
-                        saveMultipleUserHistoryToCache(selectedGame, syncItems);
-                        renderDigitsBoard();
-                        statusMsg.style.color = 'var(--success)';
-                        statusMsg.innerText = `同期完了！最新 第 ${rounds[rounds.length - 1]} 回までのデータを反映しました。`;
-                    } else {
-                        statusMsg.innerText = '同期する新しいデータがありません。';
-                    }
+                    const latestRound = syncItems[0].round;
+                    statusMsg.style.color = 'var(--success)';
+                    statusMsg.innerText = `同期完了！最新 第 ${latestRound} 回までのデータを反映しました。`;
                 } else {
-                    throw new Error('Invalid JSON format from API');
+                    throw new Error('受領したデータフォーマットが不正です。');
                 }
             } catch (e) {
                 console.warn(e);
                 statusMsg.style.color = 'var(--exclude)';
-                statusMsg.innerText = '自動更新に失敗しました（GUIサーバーが未起動、またはCORS制約）。手動データ入力を利用してください。';
+                statusMsg.innerText = `自動更新に失敗しました（${e.message}）。手動データ入力を利用してください。`;
             } finally {
                 btn.disabled = false;
                 btn.innerText = '🔄 最新結果を自動更新';
