@@ -3,6 +3,24 @@
 const DEFAULT_NUMBERS_DATA = {
   "n3": [
     {
+      "round": 7049,
+      "date": "2026-08-14",
+      "numbers": [
+        6,
+        3,
+        8
+      ]
+    },
+    {
+      "round": 7048,
+      "date": "2026-08-13",
+      "numbers": [
+        7,
+        7,
+        0
+      ]
+    },
+    {
       "round": 7047,
       "date": "2026-08-12",
       "numbers": [
@@ -882,29 +900,31 @@ const DEFAULT_NUMBERS_DATA = {
         8,
         6,
         0
-      ]
-    },
-    {
-      "round": 6949,
-      "date": "2026-03-27",
-      "numbers": [
-        0,
-        4,
-        8
-      ]
-    },
-    {
-      "round": 6948,
-      "date": "2026-03-26",
-      "numbers": [
-        4,
-        1,
-        3
       ]
     }
   ],
   "n4": [
     {
+      "round": 7049,
+      "date": "2026-08-14",
+      "numbers": [
+        6,
+        3,
+        2,
+        6
+      ]
+    },
+    {
+      "round": 7048,
+      "date": "2026-08-13",
+      "numbers": [
+        8,
+        5,
+        9,
+        4
+      ]
+    },
+    {
       "round": 7047,
       "date": "2026-08-12",
       "numbers": [
@@ -1882,26 +1902,6 @@ const DEFAULT_NUMBERS_DATA = {
         1,
         0,
         7
-      ]
-    },
-    {
-      "round": 6949,
-      "date": "2026-03-27",
-      "numbers": [
-        4,
-        5,
-        6,
-        8
-      ]
-    },
-    {
-      "round": 6948,
-      "date": "2026-03-26",
-      "numbers": [
-        1,
-        3,
-        4,
-        6
       ]
     }
   ]
