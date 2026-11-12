@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ナンバーズ解析・排除システム | 構造解析7指標合議版</title>
+    <title>ナンバーズ解析・排除システム | 構造解析5指標合議版</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -101,7 +101,10 @@
             color: var(--text-muted);
             font-weight: 700;
             font-size: 0.85rem;
+            background: transparent;
+            border: none;
             border-bottom: 2px solid transparent;
+            font-family: inherit;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
@@ -189,6 +192,13 @@
             align-items: center;
             cursor: pointer;
             padding: 4px 0;
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+            background: transparent;
+            border: none;
+            width: 100%;
+            text-align: left;
         }
         
         .settings-content {
@@ -254,6 +264,8 @@
             transition: all 0.2s;
             user-select: none;
             font-weight: 700;
+            font-family: inherit;
+            color: var(--text-main);
         }
 
         .checkbox-btn.checked {
@@ -306,6 +318,9 @@
             overflow: hidden;
             background: rgba(255, 255, 255, 0.01);
             border: 1px solid var(--border);
+            font-family: inherit;
+            padding: 0;
+            min-width: 0;
         }
 
         .num-box .num-val {
@@ -620,10 +635,20 @@
 
         .footer-note {
             text-align: center;
-            color: #20202d;
+            color: var(--text-muted);
             font-size: 0.65rem;
             margin-top: 20px;
             font-weight: 700;
+        }
+
+        /* アクセシビリティ: キーボード操作時のフォーカス表示 */
+        .tab-btn:focus-visible,
+        .game-btn:focus-visible,
+        .settings-header:focus-visible,
+        .checkbox-btn:focus-visible,
+        .num-box:focus-visible {
+            outline: 2px solid var(--purple);
+            outline-offset: 2px;
         }
 
         /* モーダル */
@@ -677,6 +702,10 @@
                 <p>・本ツールが利用する最新データは、統計解析の目的で公開データから抽出されたものであり、通信状態等の要因により実際の抽選結果と同期が遅れる場合があります。最終的な当選確認は、必ず主催者（みずほ銀行等）の公式発表で行ってください。</p>
                 <h4>3. ライセンス</h4>
                 <p>・本ツールは MIT License のもとで提供されています。（Copyright (c) 2026 tk030）</p>
+                <h4>4. 外部通信について</h4>
+                <p>・本ツールは、ページ閲覧の統計把握のため Cloudflare Web Analytics を利用しており、閲覧情報が Cloudflare に送信されます。</p>
+                <p>・フォント表示のため Google Fonts を利用しており、フォントファイル取得時に Google へ通信が発生します。</p>
+                <p>・「最新結果を自動更新」ボタンを押した場合のみ、ロトデータハブ（GitHub Pages 上の JSON）から最新の当選データを取得します。これら以外に、ツールが利用者の情報を外部へ送信する経路はありません。</p>
             </div>
             <div class="disclaimer-consent-check" style="margin: 16px 0; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">
                 <input type="checkbox" id="disclaimerConsentCheck" onchange="toggleDisclaimerButton()" style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--cyan);">
@@ -690,13 +719,13 @@
     <div class="app-container" id="appContainer" style="display: none;">
         <header>
             <h1>NUMBERS_ANALYZER</h1>
-            <div class="subtitle">ナンバーズ解析ツール・構造解析7指標合議版</div>
+            <div class="subtitle">ナンバーズ解析ツール・構造解析5指標合議版</div>
         </header>
 
         <!-- タブ切り替え -->
-        <div class="tab-container">
-            <div class="tab-btn active" id="tab-predict" onclick="switchTab('predict')">🔮 排除コンソール</div>
-            <div class="tab-btn" id="tab-backtest" onclick="switchTab('backtest')">📈 検証バックテスト</div>
+        <div class="tab-container" role="tablist">
+            <button type="button" class="tab-btn active" id="tab-predict" role="tab" onclick="switchTab('predict')">🔮 排除コンソール</button>
+            <button type="button" class="tab-btn" id="tab-backtest" role="tab" onclick="switchTab('backtest')">📈 検証バックテスト</button>
         </div>
 
         <!-- 予想（排除）タブ -->
@@ -708,14 +737,14 @@
                 </div>
             </div>
 
-            <!-- 7指標設定パネル (アコーディオン) -->
+            <!-- 5指標設定パネル (アコーディオン) -->
             <div class="flow-card">
-                <div class="settings-header" onclick="toggleSettings()">
+                <button class="settings-header" onclick="toggleSettings()" aria-expanded="false" aria-controls="settings-content">
                     <div class="section-title" style="color: var(--purple); margin-bottom: 0;">
-                        <span>⚙️</span> 構造解析7指標フィルター設定
+                        <span>⚙️</span> 構造解析5指標フィルター設定
                     </div>
                     <span id="settings-arrow" style="font-size: 0.75rem; color: var(--text-muted);">▼ 開く</span>
-                </div>
+                </button>
                 
                 <div class="settings-content" id="settings-content">
                     <!-- 合計値フィルター -->
@@ -893,17 +922,17 @@
             </div>
         </div>
 
-        <div class="footer-note">Powered by NUMBERS_ANALYZER Core | Licensed under the MIT License (© 2026 tk030)</div>
+        <div class="footer-note">NUMBERS_ANALYZER | Licensed under the MIT License (© 2026 tk030)</div>
     </div>
 
     <!-- データ入力モーダル -->
-    <div class="modal" id="importModal">
+    <div class="modal" id="importModal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle" onclick="if (event.target === this) closeImportModal()">
         <div class="modal-content">
-            <h4 class="modal-title">📥 データ手動入力・インポート</h4>
+            <h4 class="modal-title" id="importModalTitle">📥 データ手動入力・インポート</h4>
             
-            <div class="tab-container" style="border-bottom-width: 1px;">
-                <div class="tab-btn active" id="modal-tab-manual" onclick="switchModalTab('manual')" style="font-size: 0.75rem; padding: 6px 0;">1件追加</div>
-                <div class="tab-btn" id="modal-tab-csv" onclick="switchModalTab('csv')" style="font-size: 0.75rem; padding: 6px 0;">コピペ/CSV</div>
+            <div class="tab-container" role="tablist" style="border-bottom-width: 1px;">
+                <button type="button" class="tab-btn active" id="modal-tab-manual" role="tab" onclick="switchModalTab('manual')" style="font-size: 0.75rem; padding: 6px 0;">1件追加</button>
+                <button type="button" class="tab-btn" id="modal-tab-csv" role="tab" onclick="switchModalTab('csv')" style="font-size: 0.75rem; padding: 6px 0;">コピペ/CSV</button>
             </div>
 
             <!-- 手動1件追加 -->
@@ -971,6 +1000,7 @@
         let selectedGame = 'n4';
         let currentTab = 'predict';
         let modalTab = 'manual';
+        let lastFocusedElement = null;
         
         // メモリ上のデータ履歴
         let activeHistory = { n3: [], n4: [] };
@@ -1068,16 +1098,33 @@
             let parsed = { n3: [], n4: [] };
             try {
                 parsed = JSON.parse(userHistoryRaw);
-            } catch(e) {}
+            } catch (e) {
+                console.error("Failed to parse user history cache", e);
+                alert("保存データの読み込みに失敗したため、今回の保存は中止しました。既存データの上書きを防ぐための措置です。");
+                return false;
+            }
+            if (!Array.isArray(parsed.n3)) parsed.n3 = [];
+            if (!Array.isArray(parsed.n4)) parsed.n4 = [];
             
+            // 同一回号は上書き（重複を増やさない）
+            const arr = game === 'n3' ? parsed.n3 : parsed.n4;
+            const target = arr.filter(item => item.round !== newItem.round);
+            target.push(newItem);
             if (game === 'n3') {
-                parsed.n3.push(newItem);
+                parsed.n3 = target;
             } else {
-                parsed.n4.push(newItem);
+                parsed.n4 = target;
             }
             
-            localStorage.setItem('numbers_analyzer_user_history', JSON.stringify(parsed));
+            try {
+                localStorage.setItem('numbers_analyzer_user_history', JSON.stringify(parsed));
+            } catch (e) {
+                console.error("Failed to save user history cache", e);
+                alert("保存に失敗しました（容量上限の可能性があります）。既存データは保持されています。");
+                return false;
+            }
             initHistoryData(); // 再ロードしてマージ
+            return true;
         }
 
         function saveMultipleUserHistoryToCache(game, items) {
@@ -1085,16 +1132,30 @@
             let parsed = { n3: [], n4: [] };
             try {
                 parsed = JSON.parse(userHistoryRaw);
-            } catch(e) {}
-            
-            if (game === 'n3') {
-                parsed.n3 = parsed.n3.concat(items);
-            } else {
-                parsed.n4 = parsed.n4.concat(items);
+            } catch (e) {
+                console.error("Failed to parse user history cache", e);
+                alert("保存データの読み込みに失敗したため、今回の保存は中止しました。既存データの上書きを防ぐための措置です。");
+                return false;
             }
+            if (!Array.isArray(parsed.n3)) parsed.n3 = [];
+            if (!Array.isArray(parsed.n4)) parsed.n4 = [];
             
-            localStorage.setItem('numbers_analyzer_user_history', JSON.stringify(parsed));
+            // 回号キーでマージ（新しい方で上書き）し、重複して保存しない
+            const key = game === 'n3' ? 'n3' : 'n4';
+            const merged = new Map();
+            (parsed[key] || []).forEach(item => merged.set(item.round, item));
+            items.forEach(item => merged.set(item.round, item));
+            parsed[key] = Array.from(merged.values());
+            
+            try {
+                localStorage.setItem('numbers_analyzer_user_history', JSON.stringify(parsed));
+            } catch (e) {
+                console.error("Failed to save user history cache", e);
+                alert("保存に失敗しました（容量上限の可能性があります）。既存データは保持されています。");
+                return false;
+            }
             initHistoryData(); // 再ロードしてマージ
+            return true;
         }
 
         // タブ切り替え
@@ -1133,12 +1194,15 @@
         function toggleSettings() {
             const content = document.getElementById('settings-content');
             const arrow = document.getElementById('settings-arrow');
+            const header = document.querySelector('.settings-header');
             if (content.style.display === 'flex') {
                 content.style.display = 'none';
                 arrow.innerText = '▼ 開く';
+                if (header) header.setAttribute('aria-expanded', 'false');
             } else {
                 content.style.display = 'flex';
                 arrow.innerText = '▲ 閉じる';
+                if (header) header.setAttribute('aria-expanded', 'true');
             }
         }
 
@@ -1158,7 +1222,8 @@
             for (let odd = 0; odd <= config.parityMax; odd++) {
                 const even = config.digits - odd;
                 const ratioStr = `${odd}奇:${even}偶`;
-                const btn = document.createElement('div');
+                const btn = document.createElement('button');
+                btn.type = 'button';
                 btn.className = `checkbox-btn ${filter.parity.includes(odd) ? 'checked' : ''}`;
                 btn.innerText = ratioStr;
                 btn.onclick = () => {
@@ -1176,7 +1241,8 @@
             const pullContainer = document.getElementById('pull-checkboxes');
             pullContainer.innerHTML = '';
             for (let c = 0; c <= config.digits; c++) {
-                const btn = document.createElement('div');
+                const btn = document.createElement('button');
+                btn.type = 'button';
                 btn.className = `checkbox-btn ${filter.pull.includes(c) ? 'checked' : ''}`;
                 btn.innerText = `${c}桁`;
                 btn.onclick = () => {
@@ -1194,7 +1260,8 @@
             const slideContainer = document.getElementById('slide-checkboxes');
             slideContainer.innerHTML = '';
             for (let c = 0; c <= config.digits; c++) {
-                const btn = document.createElement('div');
+                const btn = document.createElement('button');
+                btn.type = 'button';
                 btn.className = `checkbox-btn ${filter.slide.includes(c) ? 'checked' : ''}`;
                 btn.innerText = `${c}桁`;
                 btn.onclick = () => {
@@ -1249,8 +1316,9 @@
                 for (let n = 0; n <= 9; n++) {
                     const emaVal = posScores[n] || 0.0;
                     const emaPercent = (emaVal * 100).toFixed(1);
-                    
-                    const box = document.createElement('div');
+
+                    const box = document.createElement('button');
+                    box.type = 'button';
                     
                     // 初期クラス決定
                     let boxClass = 'num-box';
@@ -1773,9 +1841,14 @@
                         numbers: item.numbers.map(n => parseInt(n))
                     }));
                     
-                    saveMultipleUserHistoryToCache(selectedGame, syncItems);
+                    const saved = saveMultipleUserHistoryToCache(selectedGame, syncItems);
+                    if (!saved) {
+                        statusMsg.style.color = 'var(--exclude)';
+                        statusMsg.innerText = '最新データの保存に失敗したため、既存データは保持されたままです。容量や保存データをご確認ください。';
+                        return;
+                    }
                     renderDigitsBoard();
-                    
+
                     const latestRound = syncItems[0].round;
                     statusMsg.style.color = 'var(--success)';
                     statusMsg.innerText = `同期完了！最新 第 ${latestRound} 回までのデータを反映しました。`;
@@ -1796,14 +1869,30 @@
         //  データ手動インポートモーダル
         // ==========================================
         function openImportModal() {
+            lastFocusedElement = document.activeElement;
             document.getElementById('importModal').style.display = 'flex';
             document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
             switchModalTab('manual');
+            const first = document.getElementById('input-round');
+            if (first) first.focus();
         }
 
         function closeImportModal() {
             document.getElementById('importModal').style.display = 'none';
+            if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                lastFocusedElement.focus();
+            }
+            lastFocusedElement = null;
         }
+
+        // Escキーでモーダルを閉じる
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const modal = document.getElementById('importModal');
+            if (modal && modal.style.display === 'flex') {
+                closeImportModal();
+            }
+        });
 
         function switchModalTab(tabId) {
             modalTab = tabId;
@@ -1840,7 +1929,8 @@
                     numbers: digits
                 };
                 
-                saveUserHistoryToCache(selectedGame, newItem);
+                const saved = saveUserHistoryToCache(selectedGame, newItem);
+                if (!saved) return; // エラーは保存関数内で利用者へ表示済み
                 alert(`第 ${roundVal} 回 を登録しました。`);
                 closeImportModal();
                 renderDigitsBoard();
@@ -1899,7 +1989,8 @@
                     return;
                 }
                 
-                saveMultipleUserHistoryToCache(selectedGame, parsedItems);
+                const saved = saveMultipleUserHistoryToCache(selectedGame, parsedItems);
+                if (!saved) return; // エラーは保存関数内で利用者へ表示済み
                 alert(`${parsedItems.length} 件の履歴データをインポートしました。`);
                 closeImportModal();
                 renderDigitsBoard();
