@@ -28,3 +28,17 @@ SKILLS.md
 knowledge/
 RECORD.md
 
+
+# 内部運用ファイル（共通ルール）
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+
+# レビュー・作業記録類（内部工程成果物）
+PRIMARY-REVIEW-*.md
+IMPLEMENTATION_PLAN.md
+implementation_plan.md
+walkthrough.md
+
+# 内部作業のメモ・計画
+task.md
